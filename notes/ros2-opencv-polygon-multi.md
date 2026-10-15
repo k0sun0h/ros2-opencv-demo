@@ -100,8 +100,7 @@ for cname, (lo, hi) in RANGES.items():
 | 같은 색 물체가 하나로 합쳐짐 | 두 물체가 붙어 있으면 윤곽이 1개 → MORPH_OPEN 또는 물체 분리 |
 | 색이 안 잡힘 | H 범위 조정 (10/14 함정과 동일). 빨강은 0~10 + 170~180 두 구간 |
 | putText 라벨이 `????` 로 깨짐 | **cv2.putText 는 ASCII(영문) 폰트만 지원** → 한글 불가. 해결: 라벨을 영문으로 쓰거나, **PIL(ImageDraw)로 그린다** (아래) |
-| `OSError: cannot open resource` (폰트 줄) | 그 경로에 폰트 파일이 **없음** → `sudo apt install -y fonts-nanum` 후 **경로를 자동 탐색**하게 고친다 (아래) |
-| 앞 스크립트를 끝내야 다음 스크립트가 실행됨 | `cv2.waitKey(0)` 이 **키 입력까지 무한 대기** → 창에서 아무 키나 누르면 다음 명령이 돈다. 자동으로 넘어가게 하려면 `cv2.waitKey(3000)` 처럼 밀리초 지정 |
+| `OSError: cannot open resource` (폰트 줄) | 그 경로에 폰트 파일이 **없음** → `sudo apt install -y fonts-nanum` 후 **경로를 자동 탐색**하게 고친다 (아래) 
 
 ## 화면에 한글 쓰기 (PIL)
 - cv2.putText 는 Hershey 폰트만 있어서 **한글이 안 나온다** (`????` 로 깨짐)
