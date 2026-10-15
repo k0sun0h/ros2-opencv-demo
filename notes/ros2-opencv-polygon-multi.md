@@ -164,4 +164,3 @@ print("폰트:", cands[0] if cands else "없음")
 - python3 polygon_multi.py       (도형 6개 인식, 다각형 근사 — 창에서 아무 키를 눌러야 종료)
 - python3 polygon_multi_kr.py    (같은 실습 + 한글 라벨(PIL), 폰트 자동 탐색)
 - python3 track_ball.py          (프레임 60장에서 공 추적, q 로 종료)
-- 두 개를 한 번에 돌릴 때는 앞 스크립트가 waitKey(0) 에서 멈추므로 **키를 눌러 넘겨야** 한다
