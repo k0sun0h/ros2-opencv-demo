@@ -3,3 +3,7 @@ install/
 log/
 __pycache__/
 *.pyc
+
+# 실습 이미지 (Notion 에만)
+scripts/*.jpg
+scripts/*.png
