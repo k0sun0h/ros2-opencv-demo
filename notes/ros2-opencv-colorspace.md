@@ -72,7 +72,6 @@ mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)   # 작은 흰 점 제거
 ## 자주 나는 함정
 | 증상 | 원인 / 해결 |
 | --- | --- |
-| syntax error near unexpected token `(' | Python 코드를 터미널에 직접 붙여넣음 → 파일로 저장 후 python3 파일.py |
 | mask 가 전부 검정 | 색 범위에 걸리는 픽셀이 없다 (에러 아님) → BGR 순서 확인 후 H 범위 조정 |
 | (60,120,200) 을 파랑으로 만들었는데 안 잡힘 | OpenCV 는 BGR 순서 → 실제로는 B=60,G=120,R=200 = 주황. 파랑은 (200,120,60) |
 | binary 가 검정 배경 + 흰 글씨 | 원본에서 글씨가 더 밝아서 (정상) → 흰 배경 + 검정 글씨가 되려면 글씨가 더 어두워야 함 |
