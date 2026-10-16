@@ -24,6 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'image_pub = opencv_demo.image_pub:main',
+            'object_tracker = opencv_demo.object_tracker:main',
         ],
     },
 )
