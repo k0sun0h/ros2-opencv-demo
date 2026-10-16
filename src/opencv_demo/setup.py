@@ -25,7 +25,9 @@ setup(
     entry_points={
         'console_scripts': [
             'image_pub = opencv_demo.image_pub:main',
+            'camera_pub = opencv_demo.camera_pub:main',
             'object_tracker = opencv_demo.object_tracker:main',
+            'video_pub = opencv_demo.video_pub:main',
         ],
     },
 )
