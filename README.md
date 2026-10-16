@@ -38,7 +38,7 @@ sudo apt install -y ros-humble-cv-bridge python3-opencv
 cd ~/ros2-opencv-demo
 source /opt/ros/humble/setup.bash
 colcon build --packages-select opencv_demo
-source install/setup.bash          # ⚠️ 워크스페이스 루트에서만 동작 (상대경로)
+source install/setup.bash          # 워크스페이스 루트에서만 동작 (상대경로)
 ```
 
 ## 4. 실행 (터미널 3개)
