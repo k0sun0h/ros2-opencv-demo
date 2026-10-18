@@ -6,51 +6,65 @@ from cv_bridge import CvBridge
 
 
 class CameraPublisher(Node):
-    """실제 USB 카메라(/dev/videoN)를 열어 /camera/image_raw 로 발행한다.
+    """실제 USB 카메라를 열어 /camera/image_raw 로 발행한다.
 
-    WSL2 + usbipd 환경에서는 백엔드를 CAP_V4L2 로 명시해야 열린다.
+    ★ 버그 수정 (10/18)
+      - cv2.VideoCapture(device) → cv2.VideoCapture(device, cv2.CAP_V4L2)
+        백엔드를 명시하지 않으면 WSL2 에서 출력 없이 멈춘다(hang).
+      - device_id 를 문자열(by-id)로 지정 가능하게. 재attach 마다 번호가 바뀌므로 by-id 가 안전.
+        숫자 문자열('0')은 그대로 인덱스로 변환해 하위 호환.
+      - fps 파라미터를 실제 캡처에 적용 (전에는 타이머에만 쓰였음).
+      - 로그에 실제로 열린 장치/해상도/fps 를 찍는다 (요청값이 아니라 '읽어온 값').
     """
 
     def __init__(self):
         super().__init__('camera_pub')
 
-        self.declare_parameter('device_id', '/dev/v4l/by-id/usb-Generic_Web_Camera_200901010001-video-index0')
-        self.declare_parameter('width', 320)
-        self.declare_parameter('height', 240)
+        self.declare_parameter(
+            'device_id',
+            '/dev/v4l/by-id/usb-Generic_Web_Camera_200901010001-video-index0')
+        self.declare_parameter('width', 640)
+        self.declare_parameter('height', 480)
         self.declare_parameter('fps', 10.0)
         self.declare_parameter('frame_id', 'camera')
 
-        device_id = self.get_parameter('device_id').value
-        width = self.get_parameter('width').value
-        height = self.get_parameter('height').value
-        fps = self.get_parameter('fps').value
+        raw = self.get_parameter('device_id').value
+        # '0' 처럼 숫자면 인덱스로, 그 외에는 경로 문자열로 쓴다
+        self.device = int(raw) if str(raw).strip().isdigit() else str(raw)
+
+        width = int(self.get_parameter('width').value)
+        height = int(self.get_parameter('height').value)
+        fps = float(self.get_parameter('fps').value)
         self.frame_id = self.get_parameter('frame_id').value
 
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Image, '/camera/image_raw', 10)
 
-        # ★ WSL2 에서는 백엔드를 V4L2 로 명시 (자동 선택이 멈추는 경우가 있음)
-        dev = int(device_id) if str(device_id).isdigit() else device_id
-        self.cap = cv2.VideoCapture(dev, cv2.CAP_V4L2)
-        # ★ WSL2 + usbipd 는 등시성 전송 유실이 있어서 MJPG(압축)로 대역폭을 줄여야 한다
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        self.cap.set(cv2.CAP_PROP_FPS, fps)
+        # ★ 백엔드 명시 — 없으면 조용히 멈춘다
+        self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
+        if width > 0:
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        if height > 0:
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        if fps > 0:
+            self.cap.set(cv2.CAP_PROP_FPS, fps)
 
         if not self.cap.isOpened():
             self.get_logger().error(
-                f'카메라를 열 수 없음: {device_id}  '
-                '(usbipd attach 확인 / video 그룹 확인)')
+                f'카메라를 열 수 없음: {self.device}  '
+                '(usbipd attach 확인 / sudo usermod -aG video $USER 후 WSL 재시작)')
         else:
-            w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            # 요청값이 아니라 실제 적용된 값을 읽어서 로그로 남긴다
+            got_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            got_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            got_fps = self.cap.get(cv2.CAP_PROP_FPS)
             self.get_logger().info(
-                f'카메라 열기 성공: /dev/video{device_id} ({w}x{h})')
+                f'카메라 열기 성공: {self.device} '
+                f'({got_w}x{got_h}, {got_fps:.1f} fps) — 요청 {width}x{height} @ {fps}')
 
         self.n = 0
         self.fail = 0
-        self.timer = self.create_timer(1.0 / fps, self.timer_callback)
+        self.timer = self.create_timer(1.0 / fps if fps > 0 else 0.1, self.timer_callback)
 
     def timer_callback(self):
         ok, frame = self.cap.read()

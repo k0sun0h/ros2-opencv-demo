@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import cv2
 
@@ -13,6 +15,12 @@ class ObjectTracker(Node):
 
     show_debug=true 이면 'frame'(원본+검출 표시) 과 'mask' 창을 띄운다.
     HSV 임계값 / 최소 면적은 파라미터로 바꿀 수 있다.
+
+    ★ 버그 수정 (10/18)
+      - DISPLAY 가 없으면(WSLg 미실행/헤드리스) cv2.imshow 가 죽는다.
+        → 창을 만들지 않고 자동으로 show_debug 를 끈다 (한 번 경고).
+      - 로그를 '5프레임마다' → '1초에 한 번'으로 바꿔 프레임률이 변해도 로그량이 일정하다.
+      - 검출 실패 로그도 1초에 한 번으로 통일.
     """
 
     def __init__(self):
@@ -26,22 +34,45 @@ class ObjectTracker(Node):
         self.declare_parameter('min_area', 100)
         self.declare_parameter('show_debug', True)
 
+        # ★ 헤드리스 가드 — 창을 못 띄우는 환경이면 미리 끈다
+        want_debug = bool(self.get_parameter('show_debug').value)
+        has_display = bool(os.environ.get('DISPLAY'))
+        self.show = want_debug and has_display
+        if want_debug and not has_display:
+            self.get_logger().warn(
+                'DISPLAY 가 없어 창을 끕니다 (show_debug 자동 해제). '
+                'WSLg 를 쓰려면 Windows 에서 WSL 을 최신으로 유지하세요.')
+
         self.sub = self.create_subscription(
             Image, '/camera/image_raw', self.image_callback, 10)
         self.pub = self.create_publisher(Point, '/object/center', 10)
+
         self.n = 0
         self.miss = 0
-        self.get_logger().info('구독: /camera/image_raw  ->  발행: /object/center')
+        self.last_log = None      # 검출 로그 시각
+        self.last_miss_log = None
+
+        self.get_logger().info(
+            f'구독: /camera/image_raw  ->  발행: /object/center '
+            f'(show_debug={self.show})')
 
     def _read_params(self):
         g = self.get_parameter
         lower = np.array([g('h_min').value, g('s_min').value, g('v_min').value])
         upper = np.array([g('h_max').value, 255, 255])
-        return lower, upper, g('min_area').value, g('show_debug').value
+        return lower, upper, g('min_area').value
+
+    def _once_per_second(self, key, now):
+        """같은 key 의 로그를 1초에 한 번만 통과시킨다."""
+        last = getattr(self, key)
+        if last is None or (now - last) >= 1.0:
+            setattr(self, key, now)
+            return True
+        return False
 
     def image_callback(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        lower, upper, min_area, show = self._read_params()
+        lower, upper, min_area = self._read_params()
 
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower, upper)
@@ -49,6 +80,7 @@ class ObjectTracker(Node):
 
         cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+        now = self.get_clock().now().nanoseconds / 1e9
         found = False
         if cnts:
             c = max(cnts, key=cv2.contourArea)      # 가장 큰 덩어리 = 물체
@@ -66,11 +98,11 @@ class ObjectTracker(Node):
                     found = True
 
                     self.n += 1
-                    if self.n % 5 == 0:             # 5프레임마다 로그
+                    if self._once_per_second('last_log', now):
                         self.get_logger().info(
                             f'물체 중심=({cx},{cy}) 면적={area:.0f}')
 
-                    if show:
+                    if self.show:
                         cv2.drawContours(frame, [c], -1, (0, 0, 255), 2)
                         cv2.circle(frame, (cx, cy), 6, (0, 255, 0), -1)
                         cv2.putText(frame, f'({cx},{cy}) area={int(area)}',
@@ -81,10 +113,10 @@ class ObjectTracker(Node):
             self.miss = 0
         else:
             self.miss += 1
-            if self.miss % 20 == 1:                 # 로그 폭주 방지
+            if self._once_per_second('last_miss_log', now):
                 self.get_logger().warn(f'물체를 못 찾음 ({self.miss}회 연속)')
 
-        if show:
+        if self.show:
             h, w = frame.shape[:2]
             # 화면 중앙 십자선 — 물체를 여기에 맞춰라
             cv2.line(frame, (w // 2, 0), (w // 2, h), (255, 0, 255), 1)
