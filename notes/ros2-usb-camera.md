@@ -1,8 +1,5 @@
 # USB 카메라 연결 — usbipd-win + uvcvideo (10/17)
 
-> 계획표 기준일 10/17. **10/16(금)에 하루 앞당겨 진행**했다.
-> 결과물: `39bb156 feat: USB 카메라 노드 + launch use_camera 스위치 + 영상파일 입력(video_pub)`
-
 ## 개념
 
 Windows에 꽂힌 USB 카메라를 WSL2 안에서 `/dev/video*` 으로 쓰려면 **네 겹**을 통과해야 한다.
