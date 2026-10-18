@@ -47,9 +47,9 @@ is_video  = PythonExpression(["'", source, "' == 'video'"])
 
 | 검증 수단 | 신뢰도 |
 |---|---|
-| `ros2 topic hz` / `echo` | ⚠️ 데몬에 의존 → hang 가능 |
-| `ros2 node list --no-daemon` | ✅ 데몬 우회 |
-| **`p1_verify.py` (직접 구독)** | ✅✅ **가장 정확** |
+| `ros2 topic hz` / `echo` | 데몬에 의존 → hang 가능 |
+| `ros2 node list --no-daemon` | 데몬 우회 |
+| **`p1_verify.py` (직접 구독)** | **가장 정확** |
 
 ## 실험 결과
 
