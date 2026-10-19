@@ -42,6 +42,8 @@ def generate_launch_description():
                               description='입력원: fake(가짜) | camera(실기기) | video(영상파일)'),
         DeclareLaunchArgument('video_path', default_value='',
                               description='source:=video 일 때 읽을 영상 파일 경로'),
+        DeclareLaunchArgument('loop', default_value='true',
+                              description='source:=video 일 때 영상 반복 재생 여부'),
         DeclareLaunchArgument(
             'device_id',
             default_value='/dev/v4l/by-id/usb-Generic_Web_Camera_200901010001-video-index0',
@@ -91,6 +93,8 @@ def generate_launch_description():
         condition=IfCondition(is_video),
         parameters=[{
             'video_path': LaunchConfiguration('video_path'),
+            'fps': as_float('fps'),          # ★ 10/19 수정: camera 와 동일하게 fps 전달
+            'loop': ParameterValue(LaunchConfiguration('loop'), value_type=bool),
         }],
     )
 

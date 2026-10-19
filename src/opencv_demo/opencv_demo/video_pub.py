@@ -33,8 +33,23 @@ class VideoPublisher(Node):
             w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             total = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            video_fps = self.cap.get(cv2.CAP_PROP_FPS)
             self.get_logger().info(
                 f'영상 열기 성공: {path} ({w}x{h}, {total}프레임)')
+
+            # ★ 10/19 추가: 요청값이 아니라 '실제값' 을 찍는다 (10/18 원칙)
+            #   영상 자체 fps 와 발행 fps 가 다르면 재생 속도가 왜곡된다.
+            #   예) 28.7fps 영상을 10Hz 로 내보내면 -> 2.87배 느린 슬로모션.
+            if video_fps > 0:
+                ratio = video_fps / fps if fps > 0 else 0.0
+                self.get_logger().info(
+                    f'영상 자체 fps={video_fps:.1f} / 발행 fps={fps:.1f} '
+                    f'-> {ratio:.2f}배 속도로 재생')
+                if fps > 0 and abs(video_fps - fps) / video_fps > 0.2:
+                    self.get_logger().warn(
+                        '영상 fps 와 발행 fps 차이가 20% 이상입니다. '
+                        '실시간 재생이 필요하면 fps 를 영상에 맞추세요 '
+                        f'(예: fps:={video_fps:.1f}).')
 
         self.timer = self.create_timer(1.0 / fps, self.timer_callback)
 
