@@ -7,3 +7,9 @@ __pycache__/
 # 실습 이미지 (Notion 에만)
 scripts/*.jpg
 scripts/*.png
+
+# 10/19 정리: 빌드 산출물·테스트 이미지·영상 제외
+scripts/test.jpg
+scripts/out_gray.png
+map_preview.png
+*.mp4
