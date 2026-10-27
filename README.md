@@ -146,3 +146,22 @@ ros2 topic list --no-daemon
 | `p1_verify.py` | 통합 검증 (토픽 직접 구독) |
 | `check_pipeline.sh` | 실행 + 검증 자동화 |
 | `notes/` | 학습 노트 |
+
+## 2D 매핑 (slam_demo)
+
+라이다 스캔만으로 방의 지도를 그리는 실습. 가짜 로봇이 방(8×6m)을 돌며
+`/scan` 을 발행하고 `slam_toolbox` 가 격자 지도를 만든다.
+
+```bash
+cd slam_demo
+bash run_slam_demo.sh 20          # 20초 검증
+bash save_map_demo_v2.sh 90 room  # 90초 매핑 + 지도 저장
+```
+
+결과: `room.pgm` 189×163 @ 0.05m, 방 커버리지 96.65%, `/scan` 5.0Hz.
+
+주요 결론 3개 — ①볼록한 방에서는 오래 돌려도 커버리지가 늘지 않는다(경로가 지도를 결정)
+②WSL2 mirrored 환경에서 **노드 2개 구성은 통신이 깨진다**, 3개면 정상
+③`ros2 topic hz` 같은 CLI 측정은 이 환경에서 거짓 실패를 낸다.
+
+자세한 실행법·파라미터·실험 기록은 [`slam_demo/README.md`](slam_demo/README.md).
