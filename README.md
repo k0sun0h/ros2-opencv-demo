@@ -152,8 +152,11 @@ ros2 topic list --no-daemon
 라이다 스캔만으로 방의 지도를 그리는 실습. 가짜 로봇이 방(8×6m)을 돌며
 `/scan` 을 발행하고 `slam_toolbox` 가 격자 지도를 만든다.
 
+별도 저장소로 분리했다 → [https://github.com/k0sun0h/ros2-slam-demo](https://github.com/k0sun0h/ros2-slam-demo)
+
 ```bash
-cd slam_demo
+git clone https://github.com/k0sun0h/ros2-slam-demo
+cd ros2-slam-demo
 bash run_slam_demo.sh 20          # 20초 검증
 bash save_map_demo_v2.sh 90 room  # 90초 매핑 + 지도 저장
 ```
@@ -164,4 +167,4 @@ bash save_map_demo_v2.sh 90 room  # 90초 매핑 + 지도 저장
 ②WSL2 mirrored 환경에서 **노드 2개 구성은 통신이 깨진다**, 3개면 정상
 ③`ros2 topic hz` 같은 CLI 측정은 이 환경에서 거짓 실패를 낸다.
 
-자세한 실행법·파라미터·실험 기록은 [`slam_demo/README.md`](slam_demo/README.md).
+자세한 실행법·파라미터·실험 기록은 [`ros2-slam-demo`](https://github.com/k0sun0h/ros2-slam-demo).
