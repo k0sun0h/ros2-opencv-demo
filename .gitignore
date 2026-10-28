@@ -13,3 +13,7 @@ scripts/test.jpg
 scripts/out_gray.png
 map_preview.png
 *.mp4
+captures.zip
+split_repo.sh
+enhance_readme.sh
+repair_readme.sh
